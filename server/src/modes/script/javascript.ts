@@ -56,12 +56,13 @@ export async function getJavascriptMode(
   }
   const jsDocuments = getLanguageModelCache(10, 60, document => {
     const vueDocument = documentRegions.get(document);
-    return vueDocument.getEmbeddedDocumentByType('script');
+    return vueDocument.getSingleTypeDocument('script');
   });
 
-  const regionStart = getLanguageModelCache(10, 60, document => {
+  const firstScriptRegion = getLanguageModelCache(10, 60, document => {
     const vueDocument = documentRegions.get(document);
-    return vueDocument.getLanguageRangeByType('script');
+    const scriptRegions = vueDocument.getLanguageRangesOfType('script');
+    return scriptRegions.length > 0 ? scriptRegions[0] : undefined;
   });
 
   let tsModule: T_TypeScript = ts;
@@ -186,7 +187,7 @@ export async function getJavascriptMode(
         item.detail = tsModule.displayPartsToString(details.displayParts);
         item.documentation = tsModule.displayPartsToString(details.documentation);
         if (details.codeActions && config.vetur.completion.autoImport) {
-          const textEdits = convertCodeAction(doc, details.codeActions, regionStart);
+          const textEdits = convertCodeAction(doc, details.codeActions, firstScriptRegion);
           item.additionalTextEdits = textEdits;
         }
         delete item.data;
